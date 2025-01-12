@@ -1,0 +1,14 @@
+syntax = "proto3";
+package chunk_embed;
+
+service ChunkEmbed {
+    rpc ChunkEmbedMessage(ChunkEmbedRequest) returns (ChunkEmbedResponse);
+}
+
+message ChunkEmbedRequest {
+    repeated string chunks = 1;
+}
+
+message ChunkEmbedResponse {
+    repeated float embeddings = 1;
+}

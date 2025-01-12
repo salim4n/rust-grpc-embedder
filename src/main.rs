@@ -1,38 +1,76 @@
-use tonic::{transport::Server,Request, Response, Status};
-use tonic::transport::Error;
-use message::message_server::{Message, MessageServer};
-use message::{MessageRequest, MessageResponse};
-pub mod message {
-    tonic::include_proto!("message");
+use std::sync::Arc;
+use tonic::{transport::Server, Request, Response, Status};
+use langchain_rust::embedding::{Embedder, FastEmbed};
+
+pub mod chunk_embed {
+    tonic::include_proto!("chunk_embed");
 }
 
-#[derive(Debug, Default)]
-pub struct MyMessageService {}
+use chunk_embed::chunk_embed_server::{ChunkEmbed, ChunkEmbedServer};
+use chunk_embed::{ChunkEmbedRequest, ChunkEmbedResponse};
 
+// Structure du service gRPC
+pub struct ChunkEmbedService {
+    embedder: Arc<FastEmbed>,
+}
+
+impl ChunkEmbedService {
+    pub fn new(embedder: Arc<FastEmbed>) -> Self {
+        ChunkEmbedService { embedder }
+    }
+}
+
+// Implémentation du service gRPC
 #[tonic::async_trait]
-impl Message for MyMessageService {
-    async fn send_message(
+impl ChunkEmbed for ChunkEmbedService {
+    async fn chunk_embed_message(
         &self,
-        request: Request<MessageRequest>,
-    ) -> Result<Response<MessageResponse>, Status> {
-        println!("Got a request: {:?}", request);
+        request: Request<ChunkEmbedRequest>, // Requête RPC
+    ) -> Result<Response<ChunkEmbedResponse>, Status> {
+        let chunks = request.into_inner().chunks;
 
-        let reply = MessageResponse {
-            message: format!("Hello {}!", request.into_inner().message).into(),
+        // Génération des embeddings avec le modèle
+        let embeddings_result: Result<Vec<Vec<f64>>, Status> = self
+            .embedder
+            .embed_documents(&chunks)
+            .await // Await the future to get the result
+            .map_err(|e| Status::internal(format!("Embedding error: {}", e)));
+
+        // Gestion des erreurs
+        let embeddings = embeddings_result?;
+
+        // Aplatir et convertir les embeddings
+        let embeddings: Vec<f32> = embeddings
+            .into_iter()
+            .flatten()
+            .map(|e| e as f32)
+            .collect();
+
+
+        // Construction de la réponse
+        let response = ChunkEmbedResponse {
+            embeddings,
         };
 
-        Ok(Response::new(reply))
+        Ok(Response::new(response))
     }
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
-    let addr = "[::1]:50051".parse().unwrap();
-    let message_service = MyMessageService::default();
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let addr = "[::1]:50051".parse()?;
+    let fast_embed = Arc::new(FastEmbed::try_new()?);
+
+    let embed_service = ChunkEmbedService {
+        embedder: fast_embed,
+    };
+
+    println!("Server listening on {}", addr);
+
     Server::builder()
-        .add_service(MessageServer::new(message_service))
+        .add_service(ChunkEmbedServer::new(embed_service))
         .serve(addr)
-        .await.expect("failed to serve");
+        .await?;
 
     Ok(())
 }
