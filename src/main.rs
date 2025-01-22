@@ -1,5 +1,4 @@
 mod service;
-
 use std::sync::Arc;
 use tonic::{transport::Server, Request, Response, Status};
 use langchain_rust::embedding::{Embedder, FastEmbed};
