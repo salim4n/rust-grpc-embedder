@@ -3,6 +3,7 @@ package chunk_embed;
 
 service ChunkEmbed {
     rpc ChunkEmbedMessage(ChunkEmbedRequest) returns (ChunkEmbedResponse);
+    rpc EmbedMarkdown(EmbedMarkdownRequest) returns (EmbedMarkdownResponse);
 }
 
 message ChunkEmbedRequest {
@@ -12,3 +13,17 @@ message ChunkEmbedRequest {
 message ChunkEmbedResponse {
     repeated float embeddings = 1;
 }
+
+message EmbedMarkdownRequest {
+    string markdown = 1;
+}
+
+message EmbedMarkdownResponse {
+    repeated EmbeddingFromMarkdown embeddings = 1;
+}
+
+message EmbeddingFromMarkdown  {
+    repeated float embedding =  1;
+    bytes chunk = 2;
+}
+
