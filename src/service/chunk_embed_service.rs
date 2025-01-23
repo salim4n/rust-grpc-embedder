@@ -10,9 +10,10 @@ pub mod chunk_embed {
 }
 
 use chunk_embed::chunk_embed_server::{ChunkEmbed, ChunkEmbedServer};
+use crate::service::chunk_embed_service::chunk_embed::{EmbeddingFromMarkdown, EmbedMarkdownResponse, EmbedMarkdownRequest};
 use chunk_embed::{ChunkEmbedRequest, ChunkEmbedResponse};
 use serde::{Deserialize, Serialize};
-use crate::service::chunk_embed_service::chunk_embed::{EmbedMarkdownRequest, EmbedMarkdownResponse};
+use serde::de::Unexpected::Float;
 use crate::service::huggingface::HuggingFaceClient;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -23,14 +24,6 @@ struct LogicalChunk {
 }
 pub struct ChunkEmbedService {
     embedder: Arc<FastEmbed>,
-}
-
-#[derive(Clone, PartialEq, Message)]
-pub struct EmbeddingFromMarkdown {
-    #[prost(float, repeated, tag = "1")]
-    pub embedding: Vec<f64>,
-    #[prost(bytes, tag = "2")]
-    pub chunk: Vec<u8>,
 }
 
 impl ChunkEmbedService {
@@ -90,18 +83,27 @@ impl ChunkEmbed for ChunkEmbedService {
             .await // Await the future to get the result
             .map_err(|e| Status::internal(format!("Embedding error: {}", e)));
 
-        // Construisez la réponse
-        let response = EmbeddingFromMarkdown {
-            embedding: embeddings_result.unwrap(),
-            chunk: markdown.as_bytes().to_vec(),
+        let result: Vec<EmbeddingFromMarkdown> = match embeddings_result {
+            Ok(embeddings) => embeddings
+                .iter()
+                .enumerate()
+                .map(|(index, embedding)| {
+                    EmbeddingFromMarkdown {
+                        embedding: embedding.iter().map(|&e| e as f32).collect(),
+                        chunk: chunks
+                            .get(index)
+                            .expect("Chunk not found for index")
+                            .as_bytes()
+                            .to_vec(),
+                    }
+                })
+                .collect(),
+            Err(e) => return Err(Status::internal(format!("Embedding error: {}", e))),
         };
 
-
-
-        // Construction de la réponse
-        let response = EmbedMarkdownResponse { resp };
-
-        Ok(Response::new(response))
+        Ok(Response::new(EmbedMarkdownResponse {
+            embeddings: result
+        }))
     }
 }
 

@@ -4,7 +4,6 @@ use tonic::{transport::Server, Request, Response, Status};
 use langchain_rust::embedding::{Embedder, FastEmbed};
 use crate::service::chunk_embed_service::{chunk_embed, ChunkEmbedService};
 
-//TODO: Faire un agent qui chunk un markdown
 //TODO: Finir la parralelisation de l'embedding pour  les performances
 //TODO: Un système Agentic => un agent qui recherche les mots clé selon un sujet donné par l'user
 //TODO: Un système Agentic => pour trouver le meilleur subreddit selon les mots clés de l'agent précedents
