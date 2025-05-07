@@ -1,19 +1,17 @@
 use std::sync::Arc;
 use std::time::Duration;
 use dotenvy::dotenv;
-use tonic::{transport::Server, Request, Response, Status};
+use tonic::{Request, Response, Status};
 use langchain_rust::embedding::{Embedder, FastEmbed};
-use prost::Message;
 
 pub mod chunk_embed {
     tonic::include_proto!("chunk_embed");
 }
 
-use chunk_embed::chunk_embed_server::{ChunkEmbed, ChunkEmbedServer};
+use chunk_embed::chunk_embed_server::ChunkEmbed;
 use crate::service::chunk_embed_service::chunk_embed::{EmbeddingFromMarkdown, EmbedMarkdownResponse, EmbedMarkdownRequest};
 use chunk_embed::{ChunkEmbedRequest, ChunkEmbedResponse};
 use serde::{Deserialize, Serialize};
-use serde::de::Unexpected::Float;
 use crate::service::huggingface::HuggingFaceClient;
 
 #[derive(Debug, Serialize, Deserialize)]

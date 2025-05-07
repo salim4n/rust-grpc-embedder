@@ -1,7 +1,7 @@
 mod service;
 use std::sync::Arc;
-use tonic::{transport::Server, Request, Response, Status};
-use langchain_rust::embedding::{Embedder, FastEmbed};
+use tonic::transport::Server;
+use langchain_rust::embedding::FastEmbed;
 use crate::service::chunk_embed_service::{chunk_embed, ChunkEmbedService};
 
 //TODO: Finir la parralelisation de l'embedding pour  les performances

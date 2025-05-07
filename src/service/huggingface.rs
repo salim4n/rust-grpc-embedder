@@ -1,7 +1,7 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use dotenvy::dotenv;
 use reqwest::Client;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -30,14 +30,16 @@ struct Choice {
 
 pub struct HuggingFaceClient;
 
-
-
 impl HuggingFaceClient {
-
     pub fn new() -> Self {
         HuggingFaceClient
     }
-    pub async fn chunk_markdown(&self, client: &Client, api_key: &str, markdown: &str) -> Result<Vec<String>> {
+    pub async fn chunk_markdown(
+        &self,
+        client: &Client,
+        api_key: &str,
+        markdown: &str,
+    ) -> Result<Vec<String>> {
         retry_with_backoff(|| async {
         let request = ChunkRequest {
             model: "meta-llama/Llama-3.3-70B-Instruct".to_string(),
@@ -140,7 +142,9 @@ fn main() {
 }";
     println!("Markdown: {}", markdown);
     let hf_client = HuggingFaceClient::new();
-    let chunks = hf_client.chunk_markdown(&client, &api_key, markdown).await?;
+    let chunks = hf_client
+        .chunk_markdown(&client, &api_key, markdown)
+        .await?;
 
     println!("Number of chunks: {}", chunks.len());
     for (i, chunk) in chunks.iter().enumerate() {
