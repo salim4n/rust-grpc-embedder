@@ -1,5 +1,3 @@
-You're right, I apologize for not reading the HuggingFace service implementation properly. Let me create an accurate README based on the actual implementation:
-
 # Rust gRPC Embedder Service
 
 A high-performance embedding service built with Rust, providing text embeddings via gRPC. This service leverages both FastEmbed for embedding generation and Hugging Face's Llama-3.3-70B-Instruct model for intelligent markdown chunking.
